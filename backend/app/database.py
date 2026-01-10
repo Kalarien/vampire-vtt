@@ -3,10 +3,14 @@ from sqlalchemy.orm import DeclarativeBase
 from .config import settings
 
 
-# Get database URL and convert for Railway (postgres:// -> postgresql+asyncpg://)
+# Get database URL and convert for async
 database_url = settings.database_url
+
+# Convert postgres:// or postgresql:// to postgresql+asyncpg://
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Determine if using SQLite
 is_sqlite = database_url.startswith("sqlite")

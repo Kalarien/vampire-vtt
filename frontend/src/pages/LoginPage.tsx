@@ -54,21 +54,6 @@ export function LoginPage() {
     }
   }
 
-  const handleDevLogin = async () => {
-    setIsLoading(true)
-    try {
-      const response = await authApi.devLogin(formData.username || 'DevUser')
-      const { access_token, user } = response.data
-      // zustand persist handles localStorage automatically
-      login(access_token, user)
-      navigate('/dashboard')
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Erro no login de teste')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -189,25 +174,6 @@ export function LoginPage() {
             </button>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-700">
-            <p className="text-center text-xs text-gray-500 mb-3">Login Rapido (Teste)</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="Nome (opcional)"
-                className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm placeholder-gray-400"
-              />
-              <button
-                onClick={handleDevLogin}
-                disabled={isLoading}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white text-sm rounded-md disabled:opacity-50"
-              >
-                Login Rapido
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
