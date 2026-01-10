@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-gothic;
+  }
+}
+
+@layer components {
+  /* Gothic Button Styles */
+  .btn-blood {
+    @apply bg-blood-700 hover:bg-blood-600 text-bone-100 font-gothic
+           px-6 py-2 rounded border border-blood-500
+           transition-all duration-300 shadow-blood hover:shadow-blood-lg;
+  }
+
+  .btn-midnight {
+    @apply bg-midnight-800 hover:bg-midnight-700 text-bone-100 font-gothic
+           px-6 py-2 rounded border border-midnight-600
+           transition-all duration-300;
+  }
+
+  .btn-bone {
+    @apply bg-bone-200 hover:bg-bone-300 text-midnight-900 font-gothic
+           px-6 py-2 rounded border border-bone-400
+           transition-all duration-300;
+  }
+
+  /* Card Styles */
+  .card-gothic {
+    @apply bg-midnight-900/90 border border-midnight-700 rounded-lg
+           shadow-lg backdrop-blur-sm;
+  }
+
+  .card-blood {
+    @apply bg-midnight-900/90 border border-blood-800 rounded-lg
+           shadow-blood backdrop-blur-sm;
+  }
+
+  /* Input Styles */
+  .input-gothic {
+    @apply bg-midnight-900 border border-midnight-600 rounded px-4 py-2
+           text-bone-100 placeholder-midnight-400
+           focus:border-blood-600 focus:ring-1 focus:ring-blood-600
+           focus:outline-none transition-colors;
+  }
+
+  /* Dice Styles */
+  .die {
+    @apply w-12 h-12 rounded-lg flex items-center justify-center
+           font-gothic text-xl font-bold transition-all duration-300;
+  }
+
+  .die-normal {
+    @apply bg-midnight-800 border-2 border-midnight-600 text-bone-100;
+  }
+
+  .die-hunger {
+    @apply bg-blood-900 border-2 border-blood-600 text-blood-200;
+  }
+
+  .die-success {
+    @apply ring-2 ring-green-500;
+  }
+
+  .die-critical {
+    @apply ring-2 ring-yellow-400 animate-pulse-blood;
+  }
+
+  .die-failure {
+    @apply opacity-50;
+  }
+
+  .die-bestial {
+    @apply ring-2 ring-blood-500 animate-pulse-blood;
+  }
+
+  /* Health/Willpower Tracker */
+  .tracker-box {
+    @apply w-6 h-6 border-2 border-midnight-500 rounded transition-colors;
+  }
+
+  .tracker-box-empty {
+    @apply bg-midnight-900;
+  }
+
+  .tracker-box-superficial {
+    @apply bg-midnight-600;
+  }
+
+  .tracker-box-aggravated {
+    @apply bg-blood-700;
+  }
+
+  /* Blood Pool */
+  .blood-drop {
+    @apply w-4 h-6 bg-blood-600 rounded-full rounded-t-none
+           transform rotate-180 transition-colors;
+  }
+
+  .blood-drop-empty {
+    @apply bg-midnight-700 border border-blood-900;
+  }
+
+  .blood-drop-full {
+    @apply bg-blood-600;
+  }
+
+  /* Hunger Dice V5 */
+  .hunger-track {
+    @apply flex gap-1;
+  }
+
+  .hunger-pip {
+    @apply w-5 h-5 rounded-full border-2 transition-colors;
+  }
+
+  .hunger-pip-empty {
+    @apply border-midnight-600 bg-midnight-900;
+  }
+
+  .hunger-pip-full {
+    @apply border-blood-500 bg-blood-700;
+  }
+}
+
+@layer utilities {
+  /* Gothic Text Effects */
+  .text-shadow-blood {
+    text-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+  }
+
+  .text-shadow-dark {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Scrollbar Styling */
+  .scrollbar-gothic {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.midnight.600') theme('colors.midnight.900');
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar-track {
+    background: theme('colors.midnight.900');
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar-thumb {
+    background: theme('colors.midnight.600');
+    border-radius: 4px;
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.midnight.500');
+  }
+}
