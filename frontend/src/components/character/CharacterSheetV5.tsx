@@ -2,12 +2,13 @@ import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { gameDataApi } from '@/lib/api'
 import { useState, useEffect } from 'react'
-import { Info, ChevronDown, ChevronUp } from 'lucide-react'
+import { Info, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
 
 interface CharacterSheetV5Props {
   sheet: any
   onChange: (sheet: any) => void
   characterClan?: string
+  isOwner?: boolean
 }
 
 const ATRIBUTOS = {
@@ -19,7 +20,7 @@ const ATRIBUTOS = {
   sociais: [
     { key: 'carisma', label: 'Carisma' },
     { key: 'manipulacao', label: 'Manipulacao' },
-    { key: 'compostura', label: 'Compostura' },
+    { key: 'autocontrole', label: 'Autocontrole' },
   ],
   mentais: [
     { key: 'inteligencia', label: 'Inteligencia' },
@@ -30,14 +31,14 @@ const ATRIBUTOS = {
 
 const HABILIDADES = {
   fisicas: [
+    { key: 'armasBrancas', label: 'Armas Brancas' },
+    { key: 'armasDeFogo', label: 'Armas de Fogo' },
     { key: 'atletismo', label: 'Atletismo' },
     { key: 'briga', label: 'Briga' },
     { key: 'conducao', label: 'Conducao' },
-    { key: 'armasDeFogo', label: 'Armas de Fogo' },
-    { key: 'armasBrancas', label: 'Armas Brancas' },
     { key: 'furtividade', label: 'Furtividade' },
-    { key: 'furto', label: 'Furto' },
-    { key: 'oficio', label: 'Oficio' },
+    { key: 'ladroagem', label: 'Ladroagem' },
+    { key: 'oficios', label: 'Oficios' },
     { key: 'sobrevivencia', label: 'Sobrevivencia' },
   ],
   sociais: [
@@ -48,17 +49,17 @@ const HABILIDADES = {
     { key: 'manha', label: 'Manha' },
     { key: 'performance', label: 'Performance' },
     { key: 'persuasao', label: 'Persuasao' },
-    { key: 'perspicacia', label: 'Perspicacia' },
+    { key: 'sagacidade', label: 'Sagacidade' },
     { key: 'labia', label: 'Labia' },
   ],
   mentais: [
-    { key: 'academicos', label: 'Academicos' },
     { key: 'ciencia', label: 'Ciencia' },
-    { key: 'consciencia', label: 'Consciencia' },
+    { key: 'erudicao', label: 'Erudicao' },
     { key: 'financas', label: 'Financas' },
     { key: 'investigacao', label: 'Investigacao' },
     { key: 'medicina', label: 'Medicina' },
     { key: 'ocultismo', label: 'Ocultismo' },
+    { key: 'percepcao', label: 'Percepcao' },
     { key: 'politica', label: 'Politica' },
     { key: 'tecnologia', label: 'Tecnologia' },
   ],
@@ -73,12 +74,13 @@ const XP_COSTS = {
   potenciaDeSangue: (nivel: number) => nivel * 10,
 }
 
-export default function CharacterSheetV5({ sheet, onChange, characterClan }: CharacterSheetV5Props) {
+export default function CharacterSheetV5({ sheet, onChange, characterClan, isOwner = true }: CharacterSheetV5Props) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     info: true,
     atributos: true,
     habilidades: true,
     disciplinas: true,
+    lore: false,
   })
   const [showClanInfo, setShowClanInfo] = useState(false)
   const [showPredatorInfo, setShowPredatorInfo] = useState(false)
@@ -102,11 +104,11 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
   // Calculos automaticos
   useEffect(() => {
     const vigor = getField('atributos.fisicos.vigor', 1)
-    const compostura = getField('atributos.sociais.compostura', 1)
+    const autocontrole = getField('atributos.sociais.autocontrole', 1)
     const determinacao = getField('atributos.mentais.determinacao', 1)
 
     const novaVitalidade = vigor + 3
-    const novaFdV = compostura + determinacao
+    const novaFdV = autocontrole + determinacao
 
     if (getField('vitalidade.max', 0) !== novaVitalidade) {
       updateField('vitalidade.max', novaVitalidade)
@@ -116,7 +118,7 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
     }
   }, [
     sheet?.atributos?.fisicos?.vigor,
-    sheet?.atributos?.sociais?.compostura,
+    sheet?.atributos?.sociais?.autocontrole,
     sheet?.atributos?.mentais?.determinacao,
   ])
 
@@ -193,6 +195,72 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
     </div>
   )
 
+  // Componente especial para disciplinas com tooltip de poderes
+  const [hoveredPower, setHoveredPower] = useState<{ level: number; powers: any[]; position: { x: number; y: number } } | null>(null)
+
+  const DisciplineDotRating = ({
+    value,
+    max = 5,
+    onChange: onDotChange,
+    showXP = false,
+    xpCost = 0,
+    disciplinePowers = [],
+  }: {
+    value: number
+    max?: number
+    onChange: (v: number) => void
+    showXP?: boolean
+    xpCost?: number
+    disciplinePowers?: any[]
+  }) => {
+    const getPowersForLevel = (level: number) => {
+      return disciplinePowers.filter((p: any) => p.level === level)
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex gap-1">
+          {Array.from({ length: max }, (_, i) => {
+            const level = i + 1
+            const powersAtLevel = getPowersForLevel(level)
+
+            return (
+              <button
+                key={i}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  onDotChange(level === value ? i : level)
+                }}
+                onMouseEnter={(e) => {
+                  if (powersAtLevel.length > 0) {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    setHoveredPower({
+                      level,
+                      powers: powersAtLevel,
+                      position: { x: rect.left, y: rect.bottom + 5 }
+                    })
+                  }
+                }}
+                onMouseLeave={() => setHoveredPower(null)}
+                className={cn(
+                  'w-6 h-6 rounded-full border-2 transition-colors cursor-pointer select-none',
+                  i < value
+                    ? 'bg-blood-600 border-blood-500'
+                    : 'bg-midnight-800 border-midnight-600 hover:border-blood-400'
+                )}
+                title={powersAtLevel.length > 0 ? `Nivel ${level}: ${powersAtLevel.map((p: any) => p.name).join(', ')}` : `Nivel ${level}`}
+              />
+            )
+          })}
+        </div>
+        {showXP && xpCost > 0 && (
+          <span className="text-xs text-midnight-500">({xpCost} XP)</span>
+        )}
+      </div>
+    )
+  }
+
   const TrackerBox = ({ value, onChange: onBoxChange }: { value: number; onChange: (v: number) => void }) => (
     <button
       type="button"
@@ -231,6 +299,37 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
 
   return (
     <div className="space-y-6">
+      {/* Tooltip flutuante para poderes de disciplina */}
+      {hoveredPower && (
+        <div
+          className="fixed z-50 bg-midnight-900 border border-blood-700 rounded-lg shadow-xl p-4 max-w-sm"
+          style={{
+            left: Math.min(hoveredPower.position.x, window.innerWidth - 350),
+            top: hoveredPower.position.y,
+          }}
+        >
+          <h4 className="text-blood-400 font-gothic text-sm mb-2">
+            Nivel {hoveredPower.level}
+          </h4>
+          {hoveredPower.powers.map((power: any, idx: number) => (
+            <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-midnight-700' : ''}>
+              <p className="text-bone-100 font-semibold text-sm">{power.name}</p>
+              {power.amalgam && (
+                <p className="text-purple-400 text-xs">Amalgama: {power.amalgam}</p>
+              )}
+              <p className="text-midnight-300 text-xs mt-1">{power.description}</p>
+              <div className="flex gap-3 mt-2 text-xs">
+                <span className="text-blood-400">Custo: {power.cost}</span>
+                {power.dice_pool && <span className="text-bone-400">Parada: {power.dice_pool}</span>}
+              </div>
+              {power.duration && (
+                <p className="text-midnight-400 text-xs mt-1">Duracao: {power.duration}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Informacoes Basicas */}
       <div className="card-gothic p-6">
         <SectionHeader title="Informacoes Basicas" section="info" />
@@ -432,9 +531,19 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
                   <div className="space-y-2">
                     {habs.map((hab) => {
                       const valor = getField(`habilidades.${hab.key}`, 0)
+                      const especializacao = getField(`especializacoes.${hab.key}`, '')
                       return (
-                        <div key={hab.key} className="flex items-center justify-between">
-                          <span className="text-bone-300 text-sm">{hab.label}</span>
+                        <div key={hab.key} className="flex items-center gap-2">
+                          <span className="text-bone-300 text-sm min-w-[100px]">{hab.label}</span>
+                          <input
+                            type="text"
+                            value={especializacao}
+                            onChange={(e) => updateField(`especializacoes.${hab.key}`, e.target.value)}
+                            placeholder="Espec."
+                            className="input-gothic text-xs px-1 py-0.5 w-20 flex-shrink-0"
+                            title="Especializacao (ex: Contra Membros)"
+                          />
+                          <div className="flex-1" />
                           <DotRating
                             value={valor}
                             onChange={(v) => updateField(`habilidades.${hab.key}`, v)}
@@ -449,7 +558,8 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
               ))}
             </div>
             <p className="text-midnight-500 text-xs mt-4">
-              Criacao: Distribua 11/7/4 pontos. XP: Nova habilidade = 3, subir = Novo Nivel x 3
+              Criacao: Distribua 11/7/4 pontos. XP: Nova habilidade = 3, subir = Novo Nivel x 3.
+              Especializacoes dao +1 dado em situacoes especificas.
             </p>
           </>
         )}
@@ -479,7 +589,7 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
         <div className="card-gothic p-6">
           <h3 className="font-gothic text-lg text-bone-100 mb-2">Forca de Vontade</h3>
           <p className="text-midnight-400 text-xs mb-3">
-            Compostura ({getField('atributos.sociais.compostura', 1)}) + Determinacao ({getField('atributos.mentais.determinacao', 1)}) = {getField('forcaDeVontade.max', 3)}
+            Autocontrole ({getField('atributos.sociais.autocontrole', 1)}) + Determinacao ({getField('atributos.mentais.determinacao', 1)}) = {getField('forcaDeVontade.max', 3)}
           </p>
           <div className="flex gap-1 flex-wrap">
             {Array.from({ length: getField('forcaDeVontade.max', 3) }, (_, i) => (
@@ -569,7 +679,11 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
                 const key = `disciplina${index}`
                 const nome = getField(`disciplinas.${key}.nome`, '')
                 const nivel = getField(`disciplinas.${key}.nivel`, 0)
+                const poderes = getField(`disciplinas.${key}.poderes`, '')
                 const isClã = selectedClan && selectedClan.disciplines?.includes(nome)
+                const disciplinaData = disciplines && nome
+                  ? Object.values(disciplines).find((d: any) => d.name === nome) as { name: string; description?: string; powers?: any[] } | undefined
+                  : null
 
                 return (
                   <div key={key} className="p-4 bg-midnight-800/50 rounded border border-midnight-700">
@@ -586,8 +700,39 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
                           </option>
                         ))}
                       </select>
+                      {disciplinaData && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedSections(prev => ({
+                            ...prev,
+                            [`disciplinaInfo_${key}`]: !prev[`disciplinaInfo_${key}`]
+                          }))}
+                          className="text-blood-400 hover:text-blood-300 p-1"
+                          title="Ver descricao da disciplina"
+                        >
+                          <Info className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between">
+
+                    {/* Descricao da disciplina (tooltip expandido) */}
+                    {expandedSections[`disciplinaInfo_${key}`] && disciplinaData && (
+                      <div className="mb-3 p-3 bg-midnight-900 rounded border border-midnight-600 text-sm">
+                        <p className="text-bone-300">{disciplinaData.description || 'Sem descricao disponivel.'}</p>
+                        {disciplinaData.powers && disciplinaData.powers.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-midnight-700">
+                            <p className="text-blood-400 text-xs font-gothic mb-1">Poderes disponiveis:</p>
+                            <ul className="text-midnight-300 text-xs space-y-0.5">
+                              {disciplinaData.powers.slice(0, nivel || 5).map((p: any, i: number) => (
+                                <li key={i}>• Nivel {p.level || i + 1}: {p.name}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between mb-2">
                       <span className="text-bone-400 text-sm">
                         Nivel {nivel}
                         {nome && (
@@ -596,19 +741,31 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
                           </span>
                         )}
                       </span>
-                      <DotRating
+                      <DisciplineDotRating
                         value={nivel}
                         onChange={(v) => updateField(`disciplinas.${key}.nivel`, v)}
                         showXP
                         xpCost={isClã ? XP_COSTS.disciplinaClã(nivel + 1) : XP_COSTS.disciplinaFora(nivel + 1)}
+                        disciplinePowers={disciplinaData?.powers || []}
                       />
                     </div>
+
+                    {/* Campo para poderes escolhidos */}
+                    {nome && (
+                      <textarea
+                        value={poderes}
+                        onChange={(e) => updateField(`disciplinas.${key}.poderes`, e.target.value)}
+                        placeholder="Poderes escolhidos (um por linha)..."
+                        className="input-gothic w-full h-16 text-xs resize-none mt-2"
+                      />
+                    )}
                   </div>
                 )
               })}
             </div>
             <p className="text-midnight-500 text-xs mt-4">
               XP: Cla = Nivel x 5, Fora = Nivel x 7. Criacao: 2 pontos em disciplinas do cla.
+              Passe o mouse sobre as bolinhas para ver os poderes de cada nivel.
             </p>
           </>
         )}
@@ -701,6 +858,55 @@ export default function CharacterSheetV5({ sheet, onChange, characterClan }: Cha
           className="input-gothic w-full h-32 resize-none"
           placeholder="Anotacoes, historia do personagem, etc..."
         />
+      </div>
+
+      {/* Lore - Historia do Personagem */}
+      <div className="card-gothic p-6">
+        <button
+          type="button"
+          onClick={() => toggleSection('lore')}
+          className="w-full flex items-center justify-between font-gothic text-lg text-bone-100 hover:text-blood-400 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-blood-400" />
+            Lore - Historia do Personagem
+          </span>
+          {expandedSections.lore ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        </button>
+
+        {expandedSections.lore && (
+          <div className="mt-4">
+            {isOwner ? (
+              <>
+                <textarea
+                  value={getField('lore', '')}
+                  onChange={(e) => updateField('lore', e.target.value)}
+                  className="input-gothic w-full min-h-[500px] resize-y"
+                  placeholder="Escreva aqui a historia completa do seu personagem...
+
+Origem, vida antes do Abraco, como foi Abracado, seus primeiros anos como vampiro, eventos marcantes, relacoes importantes, segredos, objetivos...
+
+Sinta-se livre para escrever o quanto quiser. Esta secao e apenas sua."
+                />
+                <p className="text-midnight-500 text-xs mt-2">
+                  Apenas voce (dono da ficha) pode editar esta secao.
+                </p>
+              </>
+            ) : (
+              <div className="bg-midnight-800/50 rounded border border-midnight-700 p-4 min-h-[200px]">
+                {getField('lore', '') ? (
+                  <div className="text-bone-300 whitespace-pre-wrap">
+                    {getField('lore', '')}
+                  </div>
+                ) : (
+                  <p className="text-midnight-500 italic">
+                    O jogador ainda nao escreveu a lore deste personagem.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

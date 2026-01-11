@@ -148,7 +148,12 @@ export default function CharacterSheetPage() {
       {/* Character Sheet */}
       {sheet && (
         character.game_version === 'v5' ? (
-          <CharacterSheetV5 sheet={sheet} onChange={handleSheetChange} characterClan={character.clan} />
+          <CharacterSheetV5
+            sheet={sheet}
+            onChange={handleSheetChange}
+            characterClan={character.clan}
+            isOwner={user?.id === character.owner_id}
+          />
         ) : (
           <CharacterSheetV20 sheet={sheet} onChange={handleSheetChange} />
         )
